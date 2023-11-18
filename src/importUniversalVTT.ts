@@ -1,4 +1,4 @@
-import OBR, { buildSceneUpload, buildImageUpload, buildCurve, Item, Metadata, Vector2 } from "@owlbear-rodeo/sdk"
+import OBR, { buildSceneUpload, buildImageUpload, buildCurve, Item, Metadata} from "@owlbear-rodeo/sdk"
 import { simplifyPolyline } from "./simplify"
 import path from "path-browserify";
 
