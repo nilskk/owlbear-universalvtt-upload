@@ -4,8 +4,8 @@
     "manifest_version": 1,
     "action": {
       "title": "UniversalVTT Upload",
-      "icon": "/icon.svg",
-      "popover": "/",
+      "icon": "/owlbear-universalvtt-upload/icon.svg",
+      "popover": "/owlbear-universalvtt-upload/",
       "height": 600,
       "width": 400
     }
