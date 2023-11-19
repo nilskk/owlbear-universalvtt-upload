@@ -1,4 +1,4 @@
-import OBR, { buildSceneUpload, buildImageUpload, buildCurve, Item, Metadata} from "@owlbear-rodeo/sdk"
+import OBR, { buildSceneUpload, buildImageUpload, buildCurve, buildImage, Item, Metadata } from "@owlbear-rodeo/sdk"
 import { simplifyPolyline } from "./simplify"
 import path from "path-browserify";
 
@@ -24,8 +24,8 @@ export function createSceneFromInput(element: HTMLInputElement) {
     });
 }
 
-export function uploadScene(element: HTMLButtonElement) {
-    element.addEventListener('click', async () => {
+export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement) {
+    buttonElement.addEventListener('click', async () => {
         const file = await convertBase64toImageFile(jsonData.image)
         const image = buildImageUpload(file)
             .dpi(jsonData.resolution.pixels_per_grid)
@@ -38,16 +38,25 @@ export function uploadScene(element: HTMLButtonElement) {
             const item = createWallFromPoints(element)
             sceneItems.push(item)
         });
-        jsonData.portals.forEach((element :any, index:number) => {
+        jsonData.portals.forEach((element: any, index: number) => {
             const item = createDoorFromPoints(element.bounds, index)
             sceneItems.push(item)
         });
+        if (checkboxElement.checked == true) {
+            jsonData.lights.forEach((element: any, index: number) => {
+                const item = createLightsFromPoints(element.position, index, jsonData.resolution.pixels_per_grid, element.range)
+                sceneItems.push(item)
+            });
+        }
+        
 
         const scene = buildSceneUpload()
             .baseMap(image)
             .name(jsonData.name)
             .items(sceneItems)
             .build()
+
+        // scene.grid.dpi = jsonData.resolution.pixels_per_grid
 
         OBR.assets.uploadScenes([scene])
 
@@ -56,9 +65,7 @@ export function uploadScene(element: HTMLButtonElement) {
 }
 
 
-
 function createWallFromPoints(pointsObject: any) {
-
     const itemScale = {
         x: 150,
         y: 150
@@ -92,6 +99,7 @@ function createDoorFromPoints(pointsObject: any, doorId: number) {
         'com.battle-system.smoke/isDoor': true,
         'com.battle-system.smoke/doorId': doorId,
     }
+
     const item = buildCurve()
         .points(pointsObject)
         .metadata(itemMetadata)
@@ -102,6 +110,36 @@ function createDoorFromPoints(pointsObject: any, doorId: number) {
         .locked(true)
         .fillOpacity(0)
         .tension(0)
+        .build()
+    return item
+}
+
+function createLightsFromPoints(pointsObject: any, lightId: number, dpi: number, range: number) {
+    pointsObject.x = pointsObject.x * 150
+    pointsObject.y = pointsObject.y * 150
+
+    const itemMetadata: Metadata = {
+        'com.battle-system.smoke/visionTorch': true,
+        'com.battle-system.smoke/hasVision': true,
+        'com.battle-system.smoke/hasAutohide': true,
+        'com.battle-system.smoke/visionRange': range,
+    }
+
+    const item = buildImage(
+        {
+            height: dpi,
+            width: dpi,
+            url: "https://nilskk.github.io/owlbear-universalvtt-upload/owlbear-universalvtt-upload/torch.png",
+            mime: "image/png",
+        },
+        { dpi: dpi, offset: { x: dpi/2, y: dpi/2 } }
+    )
+        .position(pointsObject)
+        .metadata(itemMetadata)
+        .layer("CHARACTER")
+        .name("Light " + lightId)
+        .plainText("Light " + lightId)
+        .locked(true)
         .build()
     return item
 }
