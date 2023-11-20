@@ -129,7 +129,7 @@ function createLightsFromPoints(pointsObject: any, lightId: number, dpi: number,
         {
             height: dpi,
             width: dpi,
-            url: "https://nilskk.github.io/owlbear-universalvtt-upload/owlbear-universalvtt-upload/torch.png",
+            url: "https://nilskk.github.io/owlbear-universalvtt-upload/transparent.png",
             mime: "image/png",
         },
         { dpi: dpi, offset: { x: dpi/2, y: dpi/2 } }
