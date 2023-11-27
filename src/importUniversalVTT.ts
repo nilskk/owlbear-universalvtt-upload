@@ -6,6 +6,11 @@ import path from "path-browserify";
 var jsonData: any
 
 
+/**
+ * Creates a scene from the input element.
+ * 
+ * @param element - The HTMLInputElement to create the scene from.
+ */
 export function createSceneFromInput(element: HTMLInputElement) {
     element.addEventListener('change', () => {
         if (!element.files) return;
@@ -24,7 +29,13 @@ export function createSceneFromInput(element: HTMLInputElement) {
     });
 }
 
-export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement) {
+/**
+ * Uploads a scene based on the provided button and checkbox elements.
+ * 
+ * @param buttonElement - The button element that triggers the scene upload.
+ * @param checkboxElement - The checkbox element that determines whether to include lights in the scene.
+ */
+export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement, simplificationCheckbox:HTMLInputElement, rangeElement:HTMLInputElement) {
     buttonElement.addEventListener('click', async () => {
         const file = await convertBase64toImageFile(jsonData.image)
         const image = buildImageUpload(file)
@@ -34,7 +45,9 @@ export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: H
 
         var sceneItems: Item[] = []
         jsonData.line_of_sight.forEach((element: any) => {
-            element = simplifyPolyline(element, 0.1)
+            if (simplificationCheckbox.checked == true){
+                element = simplifyPolyline(element, rangeElement.valueAsNumber)
+            }
             const item = createWallFromPoints(element)
             sceneItems.push(item)
         });
@@ -65,6 +78,12 @@ export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: H
 }
 
 
+/**
+ * Creates a wall from an object containing points.
+ * 
+ * @param pointsObject - The object containing the points for the wall.
+ * @returns The created wall item.
+ */
 function createWallFromPoints(pointsObject: any) {
     const itemScale = {
         x: 150,
@@ -89,6 +108,13 @@ function createWallFromPoints(pointsObject: any) {
     return item
 }
 
+/**
+ * Creates a door from the given points object and door ID.
+ * 
+ * @param pointsObject - The points object defining the shape of the door.
+ * @param doorId - The ID of the door.
+ * @returns The created door item.
+ */
 function createDoorFromPoints(pointsObject: any, doorId: number) {
     const itemScale = {
         x: 150,
@@ -116,6 +142,15 @@ function createDoorFromPoints(pointsObject: any, doorId: number) {
     return item
 }
 
+/**
+ * Creates lights from points.
+ * 
+ * @param pointsObject - The points object.
+ * @param lightId - The light ID.
+ * @param dpi - The DPI (dots per inch).
+ * @param range - The range of the vision.
+ * @returns The created item.
+ */
 function createLightsFromPoints(pointsObject: any, lightId: number, dpi: number, range: number) {
     pointsObject.x = pointsObject.x * 150
     pointsObject.y = pointsObject.y * 150
@@ -147,6 +182,11 @@ function createLightsFromPoints(pointsObject: any, lightId: number, dpi: number,
 }
 
 
+/**
+ * Converts a base64 encoded image string to a File object.
+ * @param imageString The base64 encoded image string.
+ * @returns A Promise that resolves to a File object representing the image file.
+ */
 async function convertBase64toImageFile(imageString: string) {
     const base64String = "data:image/png;base64," + imageString
     const data = await fetch(base64String);
