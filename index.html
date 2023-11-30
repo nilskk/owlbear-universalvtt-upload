@@ -1,14 +1,72 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
-    <script type="module" crossorigin src="/owlbear-universalvtt-upload/assets/index-1wEaMEOD.js"></script>
-    <link rel="stylesheet" crossorigin href="/owlbear-universalvtt-upload/assets/index-RHV3254n.css">
-  </head>
-  <body>
-    <div id="app"></div>
-  </body>
+
+<head>
+  <!-- This block sets up the document's character set, viewport, title, and links to the CSS stylesheet -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload a Dungeondraft Universal VTT File</title>
+  <script type="module" crossorigin src="/owlbear-universalvtt-upload/assets/index-3zv7Fqa-.js"></script>
+  <link rel="stylesheet" crossorigin href="/owlbear-universalvtt-upload/assets/index-RHV3254n.css">
+</head>
+
+<body>
+  <section id="app">
+    <!-- This section is the main container for the app -->
+
+    <header>
+      <!-- This block is the header of the app -->
+      <h2>Upload a Dungeondraft Universal VTT File</h2>
+    </header>
+
+    <form>
+      <!-- This form contains the file upload and options fieldsets -->
+
+      <fieldset>
+        <!-- This fieldset is for file upload -->
+        <legend>File Upload</legend>
+        <input type="file" id="avatar" accept=".dd2vtt" />
+      </fieldset>
+
+      <fieldset>
+        <!-- This fieldset contains options for including light sources and simplifying walls -->
+        <legend>Options</legend>
+
+        <div>
+          <!-- This block contains a checkbox for including light sources -->
+          <input type="checkbox" id="lightCheckbox">
+          <label for="lightCheckbox">Include Lightsources?</label>
+        </div>
+
+        <div id="simplification">
+          <!-- This block contains a checkbox for simplifying walls and a range input for setting the simplification ratio -->
+          <input type="checkbox" id="simplificationCheckbox" checked>
+          <label for="simplificationCheckbox">Simplify walls?</label>
+          <label for="simplificationSlider">Simplification Ratio</label>
+          <input type="range" id="simplificationSlider" min="0.05" max="0.25" step="0.05" list="values" />
+
+          <datalist id="values">
+            <!-- This datalist provides predefined options for the simplification ratio -->
+            <option value="0.05" label="0.05"></option>
+            <option value="0.1" label="0.1"></option>
+            <option value="0.15" label="0.15"></option>
+            <option value="0.2" label="0.2"></option>
+            <option value="0.25" label="0.25"></option>
+          </datalist>
+        </div>
+
+      </fieldset>
+
+      <button type="button" id="uploadButton">
+        <!-- This button triggers the creation of a scene -->
+        Create Scene
+      </button>
+
+    </form>
+  </section>
+
+  <!-- This script tag links the TypeScript file to the HTML document -->
+
+</body>
+
 </html>
