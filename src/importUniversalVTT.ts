@@ -48,7 +48,6 @@ export function createSceneFromInput(element: HTMLInputElement) {
 export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement, simplificationCheckbox: HTMLInputElement, rangeElement: HTMLInputElement) {
     // Add a click event listener to the button element
     buttonElement.addEventListener('click', async () => {
-        console.log("Button clicked");
         // Convert the base64 image to a file
         const file = base64ToImageFile(jsonData.image)
         const jpegBlob = await convertPngFileToJpegBlob(file)
@@ -239,7 +238,7 @@ function convertPngFileToJpegBlob(pngFile: File): Promise<Blob> {
                     } else {
                         reject(new Error('Failed to convert PNG to JPEG'));
                     }
-                }, 'image/jpeg', 0.8);
+                }, 'image/jpeg', 0.9);
             }
         };
 
