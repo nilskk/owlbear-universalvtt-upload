@@ -10,12 +10,12 @@ let jsonData: any
  * @param element - The input element to read the file from.
  */
 export function createSceneFromInput(element: HTMLInputElement) {
-    // Add a change event listener to the input element
+    // Listen for file selection
     element.addEventListener('change', () => {
-        // If there are no files selected, return early
+        // Return if no files selected
         if (!element.files) return;
 
-        // Get the first file from the input element
+        // Get the first selected file
         const file = element.files[0];
 
         // If a file is selected
@@ -23,16 +23,13 @@ export function createSceneFromInput(element: HTMLInputElement) {
             // Create a new FileReader
             const fileReader = new FileReader();
 
-            // Add a load event listener to the FileReader
+            // When file is loaded, parse its content and update the name
             fileReader.onload = () => {
-                // Parse the file content as JSON and assign it to the jsonData variable
                 jsonData = JSON.parse(fileReader.result as string);
-
-                // Update the name property of jsonData with the base name of the file
                 jsonData.name = path.basename(file.name, path.extname(file.name));
             };
 
-            // Start reading the file as text
+            // Start reading the file
             fileReader.readAsText(file);
         }
     });
@@ -46,39 +43,36 @@ export function createSceneFromInput(element: HTMLInputElement) {
  * @param rangeElement - The range input element that determines the simplification factor.
  */
 export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement, simplificationCheckbox: HTMLInputElement, rangeElement: HTMLInputElement) {
-    // Add a click event listener to the button element
+    // Listen for button click
     buttonElement.addEventListener('click', async () => {
-        // Convert the base64 image to a file
+        // Convert image to JPEG file
         const file = base64ToImageFile(jsonData.image)
         const jpegBlob = await convertPngFileToJpegBlob(file)
-        const jpegFile = new File([jpegBlob], 'filename.jpeg', { type: 'image/jpeg' });
+        const jpegFile = new File([jpegBlob], 'filename.webp', { type: 'image/webp' });
 
-        // Build the image upload
+        // Prepare image upload
         const image = buildImageUpload(jpegFile)
             .dpi(jsonData.resolution.pixels_per_grid)
             .name(jsonData.name)
             .build()
 
-        // Map the line of sight data to wall items
+        // Prepare wall items from line of sight data
         const sceneItems: Item[] = jsonData.line_of_sight.map((element: any) => {
-            // If the simplification checkbox is checked, simplify the polyline
             if (simplificationCheckbox.checked) {
                 element = simplifyPolyline(element, rangeElement.valueAsNumber)
             }
-
-            // Create a wall from the points
             return createWallFromPoints(element)
         });
 
-        // Map the portal data to door items and add them to the scene items
+        // Add door items from portal data
         sceneItems.push(...jsonData.portals.map((element: any, index: number) => createDoorFromPoints(element.bounds, index)));
 
-        // If the checkbox is checked, map the light data to light items and add them to the scene items
+        // If checked, add light items from light data
         if (checkboxElement.checked) {
             sceneItems.push(...jsonData.lights.map((element: any, index: number) => createLightsFromPoints(element.position, index, jsonData.resolution.pixels_per_grid, element.range)));
         }
 
-        // Build the scene upload
+        // Prepare scene upload
         const scene = buildSceneUpload()
             .baseMap(image)
             .name(jsonData.name)
@@ -220,12 +214,20 @@ function base64ToImageFile(base64: string,): File {
  * @returns A Promise that resolves to the converted JPEG Blob.
  */
 function convertPngFileToJpegBlob(pngFile: File): Promise<Blob> {
+    // Show loading symbol
+    const loadingSymbol = document.getElementById('loader');
+    if (loadingSymbol) {
+        loadingSymbol.style.display = 'block';
+    }
+
+    // Create a promise to handle the conversion process
     return new Promise((resolve, reject) => {
         const img = document.createElement('img');
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const url = URL.createObjectURL(pngFile);
 
+        // When image is loaded, draw it on a canvas and convert to JPEG
         img.onload = function () {
             if (ctx) {
                 canvas.width = img.width;
@@ -233,20 +235,26 @@ function convertPngFileToJpegBlob(pngFile: File): Promise<Blob> {
                 ctx.drawImage(img, 0, 0);
                 canvas.toBlob(blob => {
                     URL.revokeObjectURL(url);
-                    if (blob) {
-                        resolve(blob);
-                    } else {
-                        reject(new Error('Failed to convert PNG to JPEG'));
+                    // Hide loading symbol
+                    if (loadingSymbol) {
+                        loadingSymbol.style.display = 'none';
                     }
-                }, 'image/jpeg', 0.9);
+                    // Resolve or reject the promise based on blob creation
+                    blob ? resolve(blob) : reject(new Error('Failed to convert PNG to WebP'));
+                }, 'image/webp', 0.75);
             }
         };
 
+        // On error, hide loading symbol and reject the promise
         img.onerror = function () {
             URL.revokeObjectURL(url);
+            if (loadingSymbol) {
+                loadingSymbol.style.display = 'none';
+            }
             reject(new Error('Failed to load image'));
         };
 
+        // Start loading the image
         img.src = url;
     });
 }

@@ -15,7 +15,7 @@
 
     <header>
       <!-- This block is the header of the app -->
-      <h2>Upload a Dungeondraft Universal VTT File</h2>
+      <h2>Universal VTT Uploader</h2>
     </header>
 
     <form>
@@ -24,7 +24,7 @@
       <fieldset>
         <!-- This fieldset is for file upload -->
         <legend>File Upload</legend>
-        <input type="file" id="avatar" accept=".dd2vtt" />
+        <input type="file" id="avatar" accept=".dd2vtt"/>
       </fieldset>
 
       <fieldset>
@@ -36,7 +36,7 @@
           <input type="checkbox" id="lightCheckbox">
           <label for="lightCheckbox">Include Lightsources?</label>
         </div>
-
+        <br>
         <div id="simplification">
           <!-- This block contains a checkbox for simplifying walls and a range input for setting the simplification ratio -->
           <input type="checkbox" id="simplificationCheckbox" checked>
@@ -55,11 +55,14 @@
         </div>
 
       </fieldset>
-
-      <button type="button" id="uploadButton">
-        <!-- This button triggers the creation of a scene -->
-        Create Scene
-      </button>
+      <br>
+      <div style="display: flex; justify-content: center; align-items: center;">
+        <button type="button" id="uploadButton">
+          <!-- This button triggers the creation of a scene -->
+          Create Scene
+        </button>
+        <div class="loader" id="loader" style="margin-left: 10px;"></div>
+      </div>
 
     </form>
   </section>
