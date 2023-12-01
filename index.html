@@ -31,16 +31,18 @@
         <!-- This fieldset contains options for including light sources and simplifying walls -->
         <legend>Options</legend>
 
-        <div>
+        <div id="lightCheckboxDiv">
           <!-- This block contains a checkbox for including light sources -->
           <input type="checkbox" id="lightCheckbox">
           <label for="lightCheckbox">Include Lightsources?</label>
         </div>
-        <br>
         <div id="simplification">
           <!-- This block contains a checkbox for simplifying walls and a range input for setting the simplification ratio -->
           <input type="checkbox" id="simplificationCheckbox" checked>
           <label for="simplificationCheckbox">Simplify walls with ratio:</label>
+          
+        </div>
+        <div id="simplificationRatio">
           <input type="range" id="simplificationSlider" min="0.05" max="0.25" step="0.05" list="values" />
 
           <datalist id="values">
@@ -70,5 +72,13 @@
   <!-- This script tag links the TypeScript file to the HTML document -->
 
 </body>
+
+<style>
+  #simplification, #lightCheckboxDiv {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+</style>
 
 </html>
