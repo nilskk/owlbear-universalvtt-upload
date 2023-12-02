@@ -241,7 +241,7 @@ function convertPngFileToJpegBlob(pngFile: File): Promise<Blob> {
                     }
                     // Resolve or reject the promise based on blob creation
                     blob ? resolve(blob) : reject(new Error('Failed to convert PNG to WebP'));
-                }, 'image/webp', 0.75);
+                }, 'image/webp', 0.9);
             }
         };
 
