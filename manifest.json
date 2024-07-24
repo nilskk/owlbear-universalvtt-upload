@@ -1,7 +1,9 @@
 {
     "name": "UniversalVTT Upload",
     "version": "1.0.0",
+    "description": "UniversalVTT Upload to be used together with Battle-System's Smoke Extension",
     "manifest_version": 1,
+    "author": "nilskk",
     "action": {
       "title": "UniversalVTT Upload",
       "icon": "/owlbear-universalvtt-upload/icon.svg",
