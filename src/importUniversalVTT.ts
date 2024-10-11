@@ -279,6 +279,7 @@ function createLightsFromPoints(pointsObject: any, lightId: number, dpi: number,
         'com.battle-system.smoke/hasVision': true,
         'com.battle-system.smoke/hasAutohide': true,
         'com.battle-system.smoke/visionRange': range,
+        "com.battle-system.smoke/hiddenToken": true,
     }
 
     // Build and return the light item
