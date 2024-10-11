@@ -1,9 +1,51 @@
 import OBR, { buildSceneUpload, buildImageUpload, buildCurve, buildImage, Item, Metadata } from "@owlbear-rodeo/sdk"
-import { simplifyPolyline } from "./simplify"
+import simplify  from "simplify-js"
 import path from "path-browserify";
 
 
 let jsonData: any
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+const SIMPLIFICATION_FACTOR = 0.05;
+const BATCH_SIZE = 5;
+
+
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function slicePoints(points: Point[], sliceLength: number = 100): Point[][] {
+    const result: Point[][] = [];
+    for (let i = 0; i < points.length; i += (sliceLength - 1)) {
+        const slice = points.slice(i, i + sliceLength);
+        result.push(slice);
+    }
+    return result;
+}
+
+async function addItemsWithRateLimitHandling(sceneItems: Item[], batchSize: number) {
+    for (let i = 0; i < sceneItems.length; i += batchSize) {
+        const batch = sceneItems.slice(i, i + batchSize);
+        try {
+            await OBR.scene.items.addItems(batch);
+        } catch (error) {
+            console.error("An error occurred:", error);
+            if ((error as any).error.name === "RateLimitHit") {
+                console.error("Rate limit exceeded. Retrying after delay...");
+                await sleep(100); // Wait for 1 s before retrying
+                i -= batchSize; // Retry the same batch
+            } else {
+                console.error("An error occurred:", error);
+                throw error; // Re-throw the error if it's not a RateLimitError
+            }
+        }
+        await sleep(10); // Sleep for 10ms between batches
+    }
+}
 
 /**
  * Reads a file from an input element, parses it as JSON, and updates the jsonData variable.
@@ -42,7 +84,7 @@ export function createSceneFromInput(element: HTMLInputElement) {
  * @param simplificationCheckbox - The checkbox element that determines whether polyline simplification should be applied.
  * @param rangeElement - The range input element that determines the simplification factor.
  */
-export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement, simplificationCheckbox: HTMLInputElement, rangeElement: HTMLInputElement) {
+export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement) {
     // Listen for button click
     buttonElement.addEventListener('click', async () => {
         // Convert image to JPEG file
@@ -56,16 +98,19 @@ export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: H
             .name(jsonData.name)
             .build()
 
-        // Prepare wall items from line of sight data
-        const sceneItems: Item[] = jsonData.line_of_sight.map((element: any) => {
-            if (simplificationCheckbox.checked) {
-                element = simplifyPolyline(element, rangeElement.valueAsNumber)
-            }
-            return createWallFromPoints(element)
+        let sceneItems: Item[] = [];
+
+        jsonData.line_of_sight.forEach((element: any) => {
+            let elements: Point[][];
+            elements = slicePoints(element, 100);
+            elements.forEach((element) => {
+                element = simplify(element, SIMPLIFICATION_FACTOR, true);
+                sceneItems.push(createWallFromPoints(element));
+            });
         });
 
         // Add door items from portal data
-        sceneItems.push(...jsonData.portals.map((element: any, index: number) => createDoorFromPoints(element.bounds, index)));
+        sceneItems.push(...jsonData.portals.map((element: any) => createDoorFromPoints(element.bounds)));
 
         // If checked, add light items from light data
         if (checkboxElement.checked) {
@@ -85,32 +130,78 @@ export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: H
 }
 
 
+export function fixScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement) {
+    buttonElement.addEventListener('click', async () => {
+        const itemsToDelete = await OBR.scene.items.getItems(
+            (item) => item.metadata['com.battle-system.smoke/isVisionLine'] == true
+        );
+        const itemIdsToDelete = itemsToDelete.map((item) => item.id);
+        OBR.scene.items.deleteItems(itemIdsToDelete)
+        
+        let sceneItems: Item[] = [];
+
+        jsonData.line_of_sight.forEach((element: any) => {
+            let elements: Point[][];
+            elements = slicePoints(element, 100);
+            elements.forEach((element) => {
+                element = simplify(element, SIMPLIFICATION_FACTOR, true);
+                sceneItems.push(createWallFromPoints(element));
+            });
+        });
+
+        // Add door items from portal data
+        sceneItems.push(...jsonData.portals.map((element: any) => createDoorFromPoints(element.bounds)));
+
+        // If checked, add light items from light data
+        if (checkboxElement.checked) {
+            const lightsToDelete = await OBR.scene.items.getItems(
+                (item) => item.metadata['com.battle-system.smoke/visionTorch'] == true
+            );
+            const lightIdsToDelete = lightsToDelete.map((item) => item.id);
+            OBR.scene.items.deleteItems(lightIdsToDelete)
+            sceneItems.push(...jsonData.lights.map((element: any, index: number) => createLightsFromPoints(element.position, index, jsonData.resolution.pixels_per_grid, element.range)));
+        }
+
+
+        addItemsWithRateLimitHandling(sceneItems, BATCH_SIZE);
+
+    });
+}
+
+
 /**
  * Creates a wall from an object containing points.
  * @param pointsObject - The object containing the points for the wall.
  * @returns The created wall item.
  */
 function createWallFromPoints(pointsObject: any): Item {
-    // Define common scale for items
-    const itemScale = { x: 150, y: 150 }
+
+
+    const newItemPaths = [];
+    for (const point of pointsObject) {
+        newItemPaths.push({ x: point.x * 150, y: point.y * 150 });
+    }
 
     // Define metadata for the item
     const itemMetadata: Metadata = {
-        'com.battle-system.smoke/isVisionLine': true
+        'com.battle-system.smoke/isVisionLine': true,
+        'com.battle-system.smoke/doubleSided': true,
     }
 
     // Build and return the item
     return buildCurve()
-        .points(pointsObject)
+        .points(newItemPaths)
         .metadata(itemMetadata)
-        .scale(itemScale)
-        .layer("DRAWING")
-        .name("Vision Line")
+        .layer("POINTER")
+        .name("Vision Line (Line)")
         .closed(false)
         .locked(true)
         .visible(false)
         .fillOpacity(0)
         .tension(0)
+        .fillColor("#000000")
+        .strokeColor("#000000")
+        .strokeWidth(8)
         .build()
 }
 
@@ -120,29 +211,34 @@ function createWallFromPoints(pointsObject: any): Item {
  * @param doorId - The ID of the door.
  * @returns The created door item.
  */
-function createDoorFromPoints(pointsObject: any, doorId: number): Item {
-    // Define common scale for items
-    const itemScale = { x: 150, y: 150 }
+function createDoorFromPoints(pointsObject: any): Item {
+
+    const newItemPaths = [];
+    for (const point of pointsObject) {
+        newItemPaths.push({ x: point.x * 150, y: point.y * 150 });
+    }
 
     // Define metadata for the item
     const itemMetadata: Metadata = {
         'com.battle-system.smoke/isVisionLine': true,
         'com.battle-system.smoke/isDoor': true,
-        'com.battle-system.smoke/doorId': doorId,
+        'com.battle-system.smoke/doubleSided': true,
     }
 
     // Build and return the item
     return buildCurve()
-        .points(pointsObject)
+        .points(newItemPaths)
         .metadata(itemMetadata)
-        .scale(itemScale)
-        .layer("DRAWING")
+        .layer("POINTER")
         .name("Door")
         .closed(false)
         .locked(true)
         .visible(false)
         .fillOpacity(0)
         .tension(0)
+        .fillColor("#000000")
+        .strokeColor("#4000ff")
+        .strokeWidth(8)
         .build()
 }
 
@@ -161,7 +257,7 @@ function createLightsFromPoints(pointsObject: any, lightId: number, dpi: number,
 
     // Define metadata for the light
     const itemMetadata: Metadata = {
-        'com.battle-system.smoke/visionTorch': true,
+        'com.battle-system.smoke/isTorch': true,
         'com.battle-system.smoke/hasVision': true,
         'com.battle-system.smoke/hasAutohide': true,
         'com.battle-system.smoke/visionRange': range,
@@ -179,7 +275,7 @@ function createLightsFromPoints(pointsObject: any, lightId: number, dpi: number,
     )
         .position(pointsObject)
         .metadata(itemMetadata)
-        .layer("CHARACTER")
+        .layer("PROP")
         .name(`Light ${lightId}`)
         .plainText(`Light ${lightId}`)
         .locked(true)

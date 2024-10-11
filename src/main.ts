@@ -1,6 +1,6 @@
 // Import styles and functions
 import './style.css'
-import { createSceneFromInput, uploadScene } from './importUniversalVTT.ts'
+import { createSceneFromInput, uploadScene, fixScene } from './importUniversalVTT.ts'
 
 // Create a scene from the selected file
 createSceneFromInput(document.querySelector<HTMLInputElement>('#avatar')!)
@@ -8,7 +8,10 @@ createSceneFromInput(document.querySelector<HTMLInputElement>('#avatar')!)
 // Upload the created scene based on the selected options
 uploadScene(
   document.querySelector<HTMLButtonElement>('#uploadButton')!,
-  document.querySelector<HTMLInputElement>('#lightCheckbox')!,
-  document.querySelector<HTMLInputElement>('#simplificationCheckbox')!,
-  document.querySelector<HTMLInputElement>('#simplificationSlider')!
+  document.querySelector<HTMLInputElement>('#lightCheckbox')!
+)
+
+fixScene(
+  document.querySelector<HTMLButtonElement>('#fixButton')!,
+  document.querySelector<HTMLInputElement>('#lightCheckbox')!
 )

@@ -45,3 +45,4 @@ export function simplifyPolyline(points: Point[], simplificationRatio: number): 
 
   return simplifiedPolyline;
 }
+
