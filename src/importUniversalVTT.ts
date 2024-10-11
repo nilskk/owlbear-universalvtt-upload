@@ -28,6 +28,12 @@ function slicePoints(points: Point[], sliceLength: number = 100): Point[][] {
 }
 
 async function addItemsWithRateLimitHandling(sceneItems: Item[], batchSize: number) {
+    // Show loading symbol
+    const loadingSymbol = document.getElementById('loader2');
+    if (loadingSymbol) {
+        loadingSymbol.style.display = 'block';
+    }
+
     for (let i = 0; i < sceneItems.length; i += batchSize) {
         const batch = sceneItems.slice(i, i + batchSize);
         try {
@@ -44,6 +50,10 @@ async function addItemsWithRateLimitHandling(sceneItems: Item[], batchSize: numb
             }
         }
         await sleep(10); // Sleep for 10ms between batches
+    }
+
+    if (loadingSymbol) {
+        loadingSymbol.style.display = 'none';
     }
 }
 
