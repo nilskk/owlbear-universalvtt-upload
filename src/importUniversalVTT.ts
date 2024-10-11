@@ -142,11 +142,19 @@ export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: H
 
 export function fixScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement) {
     buttonElement.addEventListener('click', async () => {
+        // Delete walls and doors
         const itemsToDelete = await OBR.scene.items.getItems(
             (item) => item.metadata['com.battle-system.smoke/isVisionLine'] == true
         );
         const itemIdsToDelete = itemsToDelete.map((item) => item.id);
         OBR.scene.items.deleteItems(itemIdsToDelete)
+
+        // Delete torches
+        const lightsToDelete = await OBR.scene.items.getItems(
+            (item) => item.metadata['com.battle-system.smoke/isTorch'] == true
+        );
+        const lightIdsToDelete = lightsToDelete.map((item) => item.id);
+        OBR.scene.items.deleteItems(lightIdsToDelete)
         
         let sceneItems: Item[] = [];
 
