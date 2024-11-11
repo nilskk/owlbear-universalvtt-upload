@@ -90,11 +90,10 @@ export function createSceneFromInput(element: HTMLInputElement) {
 /**
  * Uploads a scene based on the provided button and checkbox elements.
  * @param buttonElement - The button element that triggers the upload.
- * @param checkboxElement - The checkbox element that determines whether lights should be included.
- * @param simplificationCheckbox - The checkbox element that determines whether polyline simplification should be applied.
- * @param rangeElement - The range input element that determines the simplification factor.
+ * @param lightCheckbox - The checkbox element that determines whether lights should be included.
+ * @param blockWallsCheckbox - The checkbox element that determines whether polyline simplification should be applied.
  */
-export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement) {
+export function uploadScene(buttonElement: HTMLButtonElement, lightCheckbox: HTMLInputElement, blockWallsCheckbox: HTMLInputElement) {
     // Listen for button click
     buttonElement.addEventListener('click', async () => {
         // Convert image to JPEG file
@@ -110,20 +109,21 @@ export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: H
 
         let sceneItems: Item[] = [];
 
+
         jsonData.line_of_sight.forEach((element: any) => {
             let elements: Point[][];
             elements = slicePoints(element, 100);
             elements.forEach((element) => {
                 element = simplify(element, SIMPLIFICATION_FACTOR, true);
-                sceneItems.push(createWallFromPoints(element));
+                sceneItems.push(createWallFromPoints(element, blockWallsCheckbox.checked));
             });
         });
 
         // Add door items from portal data
-        sceneItems.push(...jsonData.portals.map((element: any) => createDoorFromPoints(element.bounds)));
+        sceneItems.push(...jsonData.portals.map((element: any) => createDoorFromPoints(element.bounds, blockWallsCheckbox.checked)));
 
         // If checked, add light items from light data
-        if (checkboxElement.checked) {
+        if (lightCheckbox.checked) {
             sceneItems.push(...jsonData.lights.map((element: any, index: number) => createLightsFromPoints(element.position, index, jsonData.resolution.pixels_per_grid, element.range)));
         }
 
@@ -140,7 +140,7 @@ export function uploadScene(buttonElement: HTMLButtonElement, checkboxElement: H
 }
 
 
-export function fixScene(buttonElement: HTMLButtonElement, checkboxElement: HTMLInputElement) {
+export function fixScene(buttonElement: HTMLButtonElement, lightCheckbox: HTMLInputElement, blockWallsCheckbox: HTMLInputElement) {
     buttonElement.addEventListener('click', async () => {
         // Delete walls and doors
         const itemsToDelete = await OBR.scene.items.getItems(
@@ -163,15 +163,15 @@ export function fixScene(buttonElement: HTMLButtonElement, checkboxElement: HTML
             elements = slicePoints(element, 100);
             elements.forEach((element) => {
                 element = simplify(element, SIMPLIFICATION_FACTOR, true);
-                sceneItems.push(createWallFromPoints(element));
+                sceneItems.push(createWallFromPoints(element, blockWallsCheckbox.checked));
             });
         });
 
         // Add door items from portal data
-        sceneItems.push(...jsonData.portals.map((element: any) => createDoorFromPoints(element.bounds)));
+        sceneItems.push(...jsonData.portals.map((element: any) => createDoorFromPoints(element.bounds, blockWallsCheckbox.checked)));
 
         // If checked, add light items from light data
-        if (checkboxElement.checked) {
+        if (lightCheckbox.checked) {
             const lightsToDelete = await OBR.scene.items.getItems(
                 (item) => item.metadata['com.battle-system.smoke/visionTorch'] == true
             );
@@ -192,7 +192,7 @@ export function fixScene(buttonElement: HTMLButtonElement, checkboxElement: HTML
  * @param pointsObject - The object containing the points for the wall.
  * @returns The created wall item.
  */
-function createWallFromPoints(pointsObject: any): Item {
+function createWallFromPoints(pointsObject: any, blockWalls: boolean): Item {
 
 
     const newItemPaths = [];
@@ -204,6 +204,7 @@ function createWallFromPoints(pointsObject: any): Item {
     const itemMetadata: Metadata = {
         'com.battle-system.smoke/isVisionLine': true,
         'com.battle-system.smoke/doubleSided': true,
+        'com.battle-system.smoke/blocking': blockWalls
     }
 
     // Build and return the item
@@ -229,7 +230,7 @@ function createWallFromPoints(pointsObject: any): Item {
  * @param doorId - The ID of the door.
  * @returns The created door item.
  */
-function createDoorFromPoints(pointsObject: any): Item {
+function createDoorFromPoints(pointsObject: any, blockWalls: boolean): Item {
 
     const newItemPaths = [];
     for (const point of pointsObject) {
@@ -241,6 +242,7 @@ function createDoorFromPoints(pointsObject: any): Item {
         'com.battle-system.smoke/isVisionLine': true,
         'com.battle-system.smoke/isDoor': true,
         'com.battle-system.smoke/doubleSided': true,
+        'com.battle-system.smoke/blocking': blockWalls,
     }
 
     // Build and return the item

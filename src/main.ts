@@ -8,10 +8,12 @@ createSceneFromInput(document.querySelector<HTMLInputElement>('#avatar')!)
 // Upload the created scene based on the selected options
 uploadScene(
   document.querySelector<HTMLButtonElement>('#uploadButton')!,
-  document.querySelector<HTMLInputElement>('#lightCheckbox')!
+  document.querySelector<HTMLInputElement>('#lightCheckbox')!,
+  document.querySelector<HTMLInputElement>('#blockWallsCheckbox')!,
 )
 
 fixScene(
   document.querySelector<HTMLButtonElement>('#fixButton')!,
-  document.querySelector<HTMLInputElement>('#lightCheckbox')!
+  document.querySelector<HTMLInputElement>('#lightCheckbox')!,
+  document.querySelector<HTMLInputElement>('#blockWallsCheckbox')!,
 )
