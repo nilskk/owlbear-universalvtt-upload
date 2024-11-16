@@ -66,12 +66,18 @@
         <!-- This fieldset contains options for including light sources and simplifying walls -->
         <legend>Quality</legend>
         <div id="webpQualityDiv">
-          <input type="radio" id="qualityHigh" name="webpQuality" value="0.9">
-          <label for="qualityHigh">High (0.9)</label><br>
-          <input type="radio" id="qualityMedium" name="webpQuality" value="0.7" checked>
-          <label for="qualityMedium">Medium (0.7)</label><br>
-          <input type="radio" id="qualityLow" name="webpQuality" value="0.5">
-          <label for="qualityLow">Low (0.5)</label>
+          <div class="radio-item">
+            <input type="radio" id="qualityHigh" name="webpQuality" value="0.9">
+            <label for="qualityHigh">High (0.9)</label>
+          </div>
+          <div class="radio-item">
+            <input type="radio" id="qualityMedium" name="webpQuality" value="0.7" checked>
+            <label for="qualityMedium">Medium (0.7)</label>
+          </div>
+          <div class="radio-item">
+            <input type="radio" id="qualityLow" name="webpQuality" value="0.5">
+            <label for="qualityLow">Low (0.5)</label>
+          </div>
         </div>
       </fieldset>
       <br>
@@ -109,8 +115,12 @@
   #webpQualityDiv {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .radio-item {
+    display: flex;
     align-items: center;
-    justify-content: flex-start;
   }
 </style>
 
