@@ -93,12 +93,26 @@ export function createSceneFromInput(element: HTMLInputElement) {
  * @param lightCheckbox - The checkbox element that determines whether lights should be included.
  * @param blockWallsCheckbox - The checkbox element that determines whether polyline simplification should be applied.
  */
-export function uploadScene(buttonElement: HTMLButtonElement, lightCheckbox: HTMLInputElement, blockWallsCheckbox: HTMLInputElement) {
+export function uploadScene(
+    buttonElement: HTMLButtonElement, 
+    lightCheckbox: HTMLInputElement, 
+    blockWallsCheckbox: HTMLInputElement,
+    webpQualityRadios: NodeListOf<HTMLInputElement>
+) {
     // Listen for button click
     buttonElement.addEventListener('click', async () => {
+        // Get the selected quality value
+        let selectedQuality = 0.7; // Default value
+        for (const radio of webpQualityRadios) {
+            if (radio.checked) {
+                selectedQuality = parseFloat(radio.value);
+                break;
+            }
+        }
+
         // Convert image to JPEG file
         const file = base64ToImageFile(jsonData.image)
-        const jpegBlob = await convertPngFileToJpegBlob(file)
+        const jpegBlob = await convertPngFileToJpegBlob(file, selectedQuality)
         const jpegFile = new File([jpegBlob], 'filename.webp', { type: 'image/webp' });
 
         // Prepare image upload
@@ -330,7 +344,7 @@ function base64ToImageFile(base64: string,): File {
  * @param pngFile - The PNG file to convert.
  * @returns A Promise that resolves to the converted JPEG Blob.
  */
-function convertPngFileToJpegBlob(pngFile: File): Promise<Blob> {
+function convertPngFileToJpegBlob(pngFile: File, quality: Number): Promise<Blob> {
     // Show loading symbol
     const loadingSymbol = document.getElementById('loader');
     if (loadingSymbol) {
@@ -358,7 +372,7 @@ function convertPngFileToJpegBlob(pngFile: File): Promise<Blob> {
                     }
                     // Resolve or reject the promise based on blob creation
                     blob ? resolve(blob) : reject(new Error('Failed to convert PNG to WebP'));
-                }, 'image/webp', 0.9);
+                }, 'image/webp', quality);
             }
         };
 
